@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Official Sri Lanka Income Tax Calculator (2025/2026)</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body { font-family: 'Segoe UI', Georgia, sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8 flex items-center justify-center">
+
+    <div class="bg-slate-800 p-6 rounded-2xl shadow-2xl w-full max-w-4xl border border-slate-700">
+        <!-- Header -->
+        <div class="mb-6 text-center border-b border-slate-700 pb-4">
+            <h1 class="text-2xl font-bold text-sky-400">Personal Income Tax Calculator</h1>
+            <p class="text-sm text-slate-400 mt-1">AY 2025/2026 | Bi-directional Real-time Linked Inputs</p>
+        </div>
+
+        <!-- Linked Income Inputs Group -->
+        <div class="space-y-4 mb-6">
+            <!-- 1. Monthly Inputs (Added right where marked in image_899040.png) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-sky-400 mb-2">Monthly Local Income (LKR)</label>
+                    <input type="number" id="monthlyLkrInput" value="0" step="any" class="w-full bg-slate-900 border border-sky-600 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-sky-400" placeholder="0">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-sky-400 mb-2">Monthly Euro Component (In LKR value)</label>
+                    <input type="number" id="monthlyEuroInput" value="0" step="any" class="w-full bg-slate-900 border border-sky-600 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-sky-400" placeholder="0">
+                </div>
+            </div>
+
+            <!-- 2. Annual Inputs -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-300 mb-2">Annual Local Income (LKR)</label>
+                    <input type="number" id="lkrInput" value="0" step="any" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-sky-500" placeholder="0">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-300 mb-2">Annual Euro Component (In LKR value)</label>
+                    <input type="number" id="euroInput" value="0" step="any" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-sky-500" placeholder="0">
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button onclick="calculateExplicitTax()" class="w-full bg-sky-500 hover:bg-sky-600 text-slate-900 font-bold py-3 px-4 rounded-lg transition duration-200 cursor-pointer text-lg tracking-wide">
+            Run Tax Simulation
+        </button>
+
+        <!-- Dynamic Results Segment -->
+        <div id="resultsBlock" class="mt-8 pt-6 border-t border-slate-700 hidden">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-center font-mono">
+                <div class="bg-slate-900 p-3 rounded-xl border border-slate-700">
+                    <p class="text-xs text-slate-400">Total Income</p>
+                    <p id="resTotal" class="text-lg font-bold text-white mt-1"></p>
+                </div>
+                <div class="bg-slate-900 p-3 rounded-xl border border-slate-700">
+                    <p class="text-xs text-slate-400">Tax-Free Relief Used</p>
+                    <p id="resTaxFree" class="text-lg font-bold text-emerald-400 mt-1"></p>
+                </div>
+                <div class="bg-slate-900 p-3 rounded-xl border border-slate-700">
+                    <p class="text-xs text-slate-400">Total Taxable Pool</p>
+                    <p id="resTaxable" class="text-lg font-bold text-amber-400 mt-1"></p>
+                </div>
+            </div>
+
+            <!-- Dynamic Table Generation Area -->
+            <h3 class="text-sm font-semibold text-slate-400 mb-2 uppercase tracking-wider">Comprehensive Progression Table</h3>
+            <div class="overflow-x-auto mb-6">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="bg-slate-700 text-xs uppercase text-slate-200">
+                        <tr>
+                            <th class="p-3 rounded-l-lg">Slab Category</th>
+                            <th class="p-3">Source Component</th>
+                            <th class="p-3 text-right">Component Amount</th>
+                            <th class="p-3 text-center">Applied Rate</th>
+                            <th class="p-3 text-right rounded-r-lg">Tax Applied</th>
+                        </tr>
+                    </thead>
+                    <tbody id="slabTableBody" class="divide-y divide-slate-700 font-mono text-xs md:text-sm">
+                        <!-- Filled Dynamically via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Summary Card Box -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-700 pt-4">
+                <div class="bg-sky-950/50 p-4 rounded-xl border border-sky-800/60 text-center">
+                    <p class="text-xs text-sky-400 uppercase font-semibold">Total Annual Tax</p>
+                    <p id="finalAnnual" class="text-2xl font-bold text-white mt-1 font-mono"></p>
+                </div>
+                <div class="bg-amber-950/50 p-4 rounded-xl border border-amber-800/60 text-center">
+                    <p class="text-xs text-amber-400 uppercase font-semibold">Average Monthly APIT</p>
+                    <p id="finalMonthly" class="text-2xl font-bold text-white mt-1 font-mono"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Input Elements
+        const monthlyLkrInput = document.getElementById('monthlyLkrInput');
+        const monthlyEuroInput = document.getElementById('monthlyEuroInput');
+        const annualLkrInput = document.getElementById('lkrInput');
+        const annualEuroInput = document.getElementById('euroInput');
+
+        // Real-time Event Listeners for Dynamic Two-way Synchronization
+        monthlyLkrInput.addEventListener('input', () => {
+            const val = parseFloat(monthlyLkrInput.value) || 0;
+            annualLkrInput.value = val === 0 ? 0 : (val * 12).toFixed(2);
+        });
+
+        monthlyEuroInput.addEventListener('input', () => {
+            const val = parseFloat(monthlyEuroInput.value) || 0;
+            annualEuroInput.value = val === 0 ? 0 : (val * 12).toFixed(2);
+        });
+
+        annualLkrInput.addEventListener('input', () => {
+            const val = parseFloat(annualLkrInput.value) || 0;
+            monthlyLkrInput.value = val === 0 ? 0 : (val / 12).toFixed(2);
+        });
+
+        annualEuroInput.addEventListener('input', () => {
+            const val = parseFloat(annualEuroInput.value) || 0;
+            monthlyEuroInput.value = val === 0 ? 0 : (val / 12).toFixed(2);
+        });
+
+        function formatLKR(num) {
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'LKR' }).format(num).replace('LKR', 'Rs.');
+        }
+
+        function calculateExplicitTax() {
+            const lkrIncome = parseFloat(annualLkrInput.value) || 0;
+            const euroIncome = parseFloat(annualEuroInput.value) || 0;
+            const totalIncome = lkrIncome + euroIncome;
+
+            const taxFreeLimit = 1800000;
+            
+            const slabRules = [
+                { rate: 0.06, width: 1000000, name: "1st 1,000,000" },
+                { rate: 0.18, width: 500000,  name: "2nd 500,000" },
+                { rate: 0.24, width: 500000,  name: "3rd 500,000" },
+                { rate: 0.30, width: 500000,  name: "4th 500,000" },
+                { rate: 0.36, width: Infinity,name: "Above 4,300,000" }
+            ];
+
+            document.getElementById('resTotal').innerText = formatLKR(totalIncome);
+            const actualTaxFreeUsed = Math.min(totalIncome, taxFreeLimit);
+            document.getElementById('resTaxFree').innerText = formatLKR(actualTaxFreeUsed);
+            document.getElementById('resTaxable').innerText = formatLKR(Math.max(0, totalIncome - taxFreeLimit));
+
+            let htmlRows = `
+                <tr class="bg-slate-900/40">
+                    <td class="p-3 font-semibold text-emerald-400">Up to 1,800,000</td>
+                    <td class="p-3 text-slate-400">Core Tax-Free Relief</td>
+                    <td class="p-3 text-right text-emerald-400">${formatLKR(actualTaxFreeUsed)}</td>
+                    <td class="p-3 text-center text-emerald-500 font-bold">0% (Tax Free)</td>
+                    <td class="p-3 text-right text-emerald-400">${formatLKR(0)}</td>
+                </tr>
+            `;
+
+            let currentPointer = taxFreeLimit;
+            let totalAnnualTax = 0;
+
+            for (let i = 0; i < slabRules.length; i++) {
+                const rule = slabRules[i];
+                const slabStart = currentPointer;
+                const slabEnd = currentPointer + rule.width;
+
+                if (totalIncome > slabStart) {
+                    const totalInThisSlab = Math.min(totalIncome, slabEnd) - slabStart;
+                    
+                    let lkrInThisSlab = 0;
+                    if (lkrIncome > slabStart) {
+                        lkrInThisSlab = Math.min(lkrIncome, slabEnd) - slabStart;
+                    }
+                    
+                    const euroInThisSlab = totalInThisSlab - lkrInThisSlab;
+
+                    if (lkrInThisSlab > 0) {
+                        const taxOnLkr = lkrInThisSlab * rule.rate;
+                        totalAnnualTax += taxOnLkr;
+                        htmlRows += `
+                            <tr>
+                                <td class="p-3 font-semibold text-slate-300">${rule.name}</td>
+                                <td class="p-3 text-slate-400">Local Currency (LKR)</td>
+                                <td class="p-3 text-right text-white">${formatLKR(lkrInThisSlab)}</td>
+                                <td class="p-3 text-center text-amber-500 font-bold">${(rule.rate * 100)}%</td>
+                                <td class="p-3 text-right text-white font-bold">${formatLKR(taxOnLkr)}</td>
+                            </tr>
+                        `;
+                    }
+
+                    if (euroInThisSlab > 0) {
+                        const finalEuroRateForSlab = Math.min(rule.rate, 0.15); 
+                        const taxOnEuro = euroInThisSlab * finalEuroRateForSlab;
+                        totalAnnualTax += taxOnEuro;
+                        htmlRows += `
+                            <tr class="bg-emerald-950/20">
+                                <td class="p-3 font-semibold text-emerald-400">${rule.name}</td>
+                                <td class="p-3 text-emerald-400 font-medium">Foreign Currency (Euro)</td>
+                                <td class="p-3 text-right text-emerald-300">${formatLKR(euroInThisSlab)}</td>
+                                <td class="p-3 text-center text-emerald-400 font-bold">${(finalEuroRateForSlab * 100)}% <span class="text-xs text-slate-400 font-normal">(${rule.rate*100}% Capped)</span></td>
+                                <td class="p-3 text-right text-emerald-300 font-bold">${formatLKR(taxOnEuro)}</td>
+                            </tr>
+                        `;
+                    }
+                }
+                currentPointer = slabEnd;
+            }
+
+            document.getElementById('slabTableBody').innerHTML = htmlRows;
+            document.getElementById('finalAnnual').innerText = formatLKR(totalAnnualTax);
+            document.getElementById('finalMonthly').innerText = formatLKR(totalAnnualTax / 12);
+            document.getElementById('resultsBlock').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
