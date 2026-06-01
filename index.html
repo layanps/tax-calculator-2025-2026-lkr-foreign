@@ -3,220 +3,536 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Official Sri Lanka Income Tax Calculator (2025/2026)</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <title>Automated Salary calculator with PAYE Tax & EPF/ETF</title>
     <style>
-        body { font-family: 'Segoe UI', Georgia, sans-serif; }
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-green: #4ade80;
+            --accent-red: #f87171;
+            --accent-orange: #fb923c;
+            --border-color: #334155;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 30px 15px;
+        }
+
+        .calculator-container {
+            max-width: 950px;
+            margin: auto;
+            background: #111827;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+        }
+
+        h2 {
+            text-align: center;
+            color: var(--accent-blue);
+            margin-bottom: 25px;
+            font-size: 28px;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        h3 {
+            color: var(--accent-blue);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+            margin-top: 0;
+            font-size: 18px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-main);
+        }
+
+        input[type="number"] {
+            width: 140px;
+            padding: 8px;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-main);
+            text-align: right;
+            font-size: 14px;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .result-group {
+            font-weight: bold;
+            border-top: 1px dashed var(--border-color);
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+        .val-display {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 15px;
+            font-weight: bold;
+        }
+
+        .btn-container {
+            grid-column: span 2;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .calc-btn {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .calc-btn:hover {
+            background-color: #1d4ed8;
+        }
+
+        .summary-container {
+            grid-column: span 2;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .summary-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .total-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .net-box {
+            background: rgba(74, 222, 128, 0.1);
+            border: 2px solid var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .ctc-box {
+            background: rgba(56, 189, 248, 0.1);
+            border: 2px solid var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        .full-section {
+            grid-column: span 2;
+            margin-top: 10px;
+        }
+
+        .tax-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 13px;
+        }
+
+        .tax-table th, .tax-table td {
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            text-align: left;
+        }
+
+        .tax-table th {
+            background-color: #1e293b;
+            color: #f1f5f9;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .tax-table td.num {
+            text-align: right;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .muted-bracket {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: normal;
+        }
+
+        .row-taxfree { color: #4ade80 !important; font-weight: 600; }
+        .row-lkr { color: #e2e8f0; }
+        .row-fx { color: #67e8f9 !important; background: rgba(6, 182, 212, 0.05); }
+        .rate-badge { font-weight: bold; text-align: center; }
+        
+        .tax-summary-text {
+            margin-top: 15px;
+            padding: 12px;
+            background: rgba(251, 146, 60, 0.1);
+            border-left: 4px solid var(--accent-orange);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .breakdown-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .breakdown-grid { grid-template-columns: 1fr; }
+        }
+
+        .breakdown-card {
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid var(--accent-blue);
+        }
+
+        .breakdown-card h4 { margin: 0 0 5px 0; font-size: 14px; color: #cbd5e1; }
+        .breakdown-card .formula { font-size: 11px; color: #64748b; margin-bottom: 8px; }
+        .breakdown-card .calc-value { font-family: 'Courier New', Courier, monospace; font-size: 16px; font-weight: bold; }
+
+        .disclaimer-box {
+            grid-column: span 2;
+            margin-top: 25px;
+            padding: 15px;
+            background: #1e293b;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 12px;
+            color: #94a3b8;
+            text-align: center;
+            line-height: 1.6;
+        }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8 flex items-center justify-center">
+<body>
 
-    <div class="bg-slate-800 p-6 rounded-2xl shadow-2xl w-full max-w-4xl border border-slate-700">
-        <!-- Header -->
-        <div class="mb-6 text-center border-b border-slate-700 pb-4">
-            <h1 class="text-2xl font-bold text-sky-400">Personal Income Tax Calculator</h1>
-            <p class="text-sm text-slate-400 mt-1">AY 2025/2026 | Bi-directional Real-time Linked Inputs</p>
+<div class="calculator-container">
+    <h2>Automated Salary calculator with PAYE Tax & EPF/ETF</h2>
+    
+    <div class="grid-container">
+        <!-- Earnings Section -->
+        <div class="section">
+            <h3>Earnings & Allowances</h3>
+            <div class="form-group">
+                <label>BASIC SALARY</label>
+                <input type="number" id="basicSalary" value="0" placeholder="0.00">
+            </div>
+            <div class="form-group">
+                <label>TOTAL OTHER ALLOWANCES</label>
+                <input type="number" id="totalOtherAllowances" value="0" placeholder="0.00">
+            </div>
+            <div class="form-group">
+                <label>NO PAY</label>
+                <input type="number" id="noPay" value="0" placeholder="0.00">
+            </div>
+            <div class="form-group result-group">
+                <label>TOTAL FOR EPF</label>
+                <span id="totalEpf" class="val-display">0.00</span>
+            </div>
+            <div class="form-group" style="background: rgba(56, 189, 248, 0.05); padding: 6px 8px; border-radius: 6px; border: 1px dashed var(--accent-blue); margin-top: 10px;">
+                <label style="color: var(--accent-blue);">FOREIGN CURRENCY COMPONENT (IN LKR VALUE)</label>
+                <input type="number" id="foreignCurrencyComp" value="0" placeholder="0.00" style="border-color: var(--accent-blue);">
+            </div>
+            <div class="form-group result-group" style="border-top: 2px solid var(--border-color); margin-top: 15px;">
+                <label style="color: var(--accent-blue);">GROSS SALARY</label>
+                <span id="grossSalary" class="val-display" style="color: var(--accent-blue);">0.00</span>
+            </div>
         </div>
 
-        <!-- Linked Income Inputs Group -->
-        <div class="space-y-4 mb-6">
-            <!-- 1. Monthly Inputs (Added right where marked in image_899040.png) -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-semibold text-sky-400 mb-2">Monthly Local Income (LKR)</label>
-                    <input type="number" id="monthlyLkrInput" value="0" step="any" class="w-full bg-slate-900 border border-sky-600 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-sky-400" placeholder="0">
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-sky-400 mb-2">Monthly Euro Component (In LKR value)</label>
-                    <input type="number" id="monthlyEuroInput" value="0" step="any" class="w-full bg-slate-900 border border-sky-600 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-sky-400" placeholder="0">
-                </div>
+        <!-- Deductions Section -->
+        <div class="section">
+            <h3>Deductions</h3>
+            <div class="form-group">
+                <label>EPF 8%</label>
+                <span id="epf8" class="val-display" style="color: var(--accent-red);">0.00</span>
             </div>
+            <div class="form-group" style="background: rgba(251, 146, 60, 0.05); padding: 4px 8px; border-radius: 4px;">
+                <label style="color: var(--accent-orange);">PAYE / APIT TAX</label>
+                <span id="payeTax" class="val-display" style="color: var(--accent-orange);">0.00</span>
+            </div>
+            <div class="form-group">
+                <label>STAMP DUTY</label>
+                <input type="number" id="stampDuty" value="25" placeholder="25.00">
+            </div>
+            <div class="form-group">
+                <label>ADVANCE</label>
+                <input type="number" id="advance" value="0" placeholder="0.00">
+            </div>
+            <div class="form-group">
+                <label>INSURANCE</label>
+                <input type="number" id="insurance" value="0" placeholder="0.00">
+            </div>
+            <div class="form-group">
+                <label>OTHER</label>
+                <input type="number" id="other" value="0" placeholder="0.00">
+            </div>
+            <div class="form-group">
+                <label>LOAN</label>
+                <input type="number" id="loan" value="0" placeholder="0.00">
+            </div>
+            <div class="form-group result-group" style="border-top: 2px solid var(--border-color);">
+                <label>TOTAL DEDUCTIONS</label>
+                <span id="totalDeductions" class="val-display">0.00</span>
+            </div>
+        </div>
 
-            <!-- 2. Annual Inputs -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-semibold text-slate-300 mb-2">Annual Local Income (LKR)</label>
-                    <input type="number" id="lkrInput" value="0" step="any" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-sky-500" placeholder="0">
+        <!-- Calculate Action Button -->
+        <div class="btn-container">
+            <button class="calc-btn" onclick="calculateSalaryAndTax()">Calculate Salary & Tax</button>
+        </div>
+
+        <!-- Summary Totals -->
+        <div class="summary-container">
+            <div class="total-box net-box">
+                <div style="font-size: 13px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px;">Net Salary (Take Home)</div>
+                Rs. <span id="netSalary">0.00</span>
+            </div>
+            <div class="total-box ctc-box">
+                <div style="font-size: 13px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px;">Cost to Company (CTC)</div>
+                Rs. <span id="ctcValue">0.00</span>
+            </div>
+        </div>
+
+        <!-- Statutory Breakdown Section -->
+        <div class="section full-section">
+            <h3>Statutory Contributions Breakdown</h3>
+            <div class="breakdown-grid">
+                <div class="breakdown-card">
+                    <h4>EPF Employee (8%)</h4>
+                    <div class="formula">Formula: Total for EPF × 8%</div>
+                    <div id="breakdownEpf8" class="calc-value" style="color: var(--accent-red);">0.00</div>
                 </div>
-                <div>
-                    <label class="block text-sm font-semibold text-slate-300 mb-2">Annual Euro Component (In LKR value)</label>
-                    <input type="number" id="euroInput" value="0" step="any" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-sky-500" placeholder="0">
+                <div class="breakdown-card" style="border-left-color: var(--accent-green);">
+                    <h4 style="color: var(--accent-green);">EPF Employer (12%)</h4>
+                    <div class="formula">Formula: Total for EPF × 12%</div>
+                    <div id="breakdownEpf12" class="calc-value" style="color: var(--accent-green);">0.00</div>
+                </div>
+                <div class="breakdown-card" style="border-left-color: var(--accent-green);">
+                    <h4 style="color: var(--accent-green);">ETF Employer (3%)</h4>
+                    <div class="formula">Formula: Total for EPF × 3%</div>
+                    <div id="breakdownEtf3" class="calc-value" style="color: var(--accent-green);">0.00</div>
                 </div>
             </div>
         </div>
 
-        <!-- Submit Button -->
-        <button onclick="calculateExplicitTax()" class="w-full bg-sky-500 hover:bg-sky-600 text-slate-900 font-bold py-3 px-4 rounded-lg transition duration-200 cursor-pointer text-lg tracking-wide">
-            Run Tax Simulation
-        </button>
-
-        <!-- Dynamic Results Segment -->
-        <div id="resultsBlock" class="mt-8 pt-6 border-t border-slate-700 hidden">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-center font-mono">
-                <div class="bg-slate-900 p-3 rounded-xl border border-slate-700">
-                    <p class="text-xs text-slate-400">Total Income</p>
-                    <p id="resTotal" class="text-lg font-bold text-white mt-1"></p>
-                </div>
-                <div class="bg-slate-900 p-3 rounded-xl border border-slate-700">
-                    <p class="text-xs text-slate-400">Tax-Free Relief Used</p>
-                    <p id="resTaxFree" class="text-lg font-bold text-emerald-400 mt-1"></p>
-                </div>
-                <div class="bg-slate-900 p-3 rounded-xl border border-slate-700">
-                    <p class="text-xs text-slate-400">Total Taxable Pool</p>
-                    <p id="resTaxable" class="text-lg font-bold text-amber-400 mt-1"></p>
-                </div>
-            </div>
-
-            <!-- Dynamic Table Generation Area -->
-            <h3 class="text-sm font-semibold text-slate-400 mb-2 uppercase tracking-wider">Comprehensive Progression Table</h3>
-            <div class="overflow-x-auto mb-6">
-                <table class="w-full text-left text-sm text-slate-300">
-                    <thead class="bg-slate-700 text-xs uppercase text-slate-200">
+        <!-- PAYE Tax Breakdown Section (Moved to the absolute bottom) -->
+        <div class="section full-section" style="border-left: 4px solid var(--accent-orange);">
+            <h3 style="color: var(--accent-orange);">COMPREHENSIVE PROGRESSION TABLE (MONTHLY)</h3>
+            <div style="overflow-x-auto;">
+                <table class="tax-table">
+                    <thead>
                         <tr>
-                            <th class="p-3 rounded-l-lg">Slab Category</th>
-                            <th class="p-3">Source Component</th>
-                            <th class="p-3 text-right">Component Amount</th>
-                            <th class="p-3 text-center">Applied Rate</th>
-                            <th class="p-3 text-right rounded-r-lg">Tax Applied</th>
+                            <th style="padding: 12px;">Slab Category</th>
+                            <th style="padding: 12px;">Source Component</th>
+                            <th style="padding: 12px; text-align: right;">Component Amount</th>
+                            <th style="padding: 12px; text-align: center;">Applied Rate</th>
+                            <th style="padding: 12px; text-align: right;">Tax Applied</th>
                         </tr>
                     </thead>
-                    <tbody id="slabTableBody" class="divide-y divide-slate-700 font-mono text-xs md:text-sm">
-                        <!-- Filled Dynamically via JS -->
+                    <tbody id="slabTableBody">
+                        <!-- Generated Dynamically via JS -->
                     </tbody>
                 </table>
             </div>
-
-            <!-- Summary Card Box -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-700 pt-4">
-                <div class="bg-sky-950/50 p-4 rounded-xl border border-sky-800/60 text-center">
-                    <p class="text-xs text-sky-400 uppercase font-semibold">Total Annual Tax</p>
-                    <p id="finalAnnual" class="text-2xl font-bold text-white mt-1 font-mono"></p>
-                </div>
-                <div class="bg-amber-950/50 p-4 rounded-xl border border-amber-800/60 text-center">
-                    <p class="text-xs text-amber-400 uppercase font-semibold">Average Monthly APIT</p>
-                    <p id="finalMonthly" class="text-2xl font-bold text-white mt-1 font-mono"></p>
-                </div>
+            <div class="tax-summary-text" id="taxSummaryText">
+                Taxable Income: Rs. 0.00 | Total Combined Monthly Tax: Rs. 0.00
             </div>
         </div>
+
+        <!-- Disclaimer Box -->
+        <div class="disclaimer-box">
+            <strong>Disclaimer:</strong> This is an open-source simulation tool built for educational/informational purposes based on general IRD guidelines. Please consult a certified tax professional for official tax filings.
+        </div>
     </div>
+</div>
 
-    <script>
-        // DOM Input Elements
-        const monthlyLkrInput = document.getElementById('monthlyLkrInput');
-        const monthlyEuroInput = document.getElementById('monthlyEuroInput');
-        const annualLkrInput = document.getElementById('lkrInput');
-        const annualEuroInput = document.getElementById('euroInput');
+<script>
+function formatLKR(num) {
+    return "Rs. " + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
-        // Real-time Event Listeners for Dynamic Two-way Synchronization
-        monthlyLkrInput.addEventListener('input', () => {
-            const val = parseFloat(monthlyLkrInput.value) || 0;
-            annualLkrInput.value = val === 0 ? 0 : (val * 12).toFixed(2);
-        });
+function calculateSalaryAndTax() {
+    // Inputs
+    const basicSalary = parseFloat(document.getElementById('basicSalary').value) || 0;
+    const totalOtherAllowances = parseFloat(document.getElementById('totalOtherAllowances').value) || 0;
+    const noPay = parseFloat(document.getElementById('noPay').value) || 0;
+    const foreignCurrencyComp = parseFloat(document.getElementById('foreignCurrencyComp').value) || 0;
+    
+    const stampDuty = parseFloat(document.getElementById('stampDuty').value) || 0;
+    const advance = parseFloat(document.getElementById('advance').value) || 0;
+    const insurance = parseFloat(document.getElementById('insurance').value) || 0;
+    const other = parseFloat(document.getElementById('other').value) || 0;
+    const loan = parseFloat(document.getElementById('loan').value) || 0;
 
-        monthlyEuroInput.addEventListener('input', () => {
-            const val = parseFloat(monthlyEuroInput.value) || 0;
-            annualEuroInput.value = val === 0 ? 0 : (val * 12).toFixed(2);
-        });
+    // Core Calculations
+    const totalForEpf = Math.max(0, basicSalary - noPay);
+    const lkrIncome = totalForEpf + totalOtherAllowances; 
+    const totalIncome = lkrIncome + foreignCurrencyComp; 
 
-        annualLkrInput.addEventListener('input', () => {
-            const val = parseFloat(annualLkrInput.value) || 0;
-            monthlyLkrInput.value = val === 0 ? 0 : (val / 12).toFixed(2);
-        });
+    // Monthly Framework Slabs Rules (Derived from Annual Rules divided by 12)
+    const taxFreeLimit = 150000; 
+    const slabRules = [
+        { rate: 0.06, width: 83333.33, name: "1st 83,333.33" },  
+        { rate: 0.18, width: 41666.67, name: "2nd 41,666.67" },  
+        { rate: 0.24, width: 41666.67, name: "3rd 41,666.67" },  
+        { rate: 0.30, width: 41666.67, name: "4th 41,666.67" },  
+        { rate: 0.36, width: Infinity, name: "Above 358,333.33" } 
+    ];
 
-        annualEuroInput.addEventListener('input', () => {
-            const val = parseFloat(annualEuroInput.value) || 0;
-            monthlyEuroInput.value = val === 0 ? 0 : (val / 12).toFixed(2);
-        });
+    // Initialize Table Layout
+    const actualTaxFreeUsed = Math.min(totalIncome, taxFreeLimit);
+    let htmlRows = `
+        <tr class="row-taxfree">
+            <td style="padding: 10px;">Up to 150,000.00</td>
+            <td style="padding: 10px;">Core Tax-Free Relief</td>
+            <td style="padding: 10px;" class="num">${formatLKR(actualTaxFreeUsed)}</td>
+            <td style="padding: 10px; text-align: center; color: var(--accent-green);" class="rate-badge">0% (Tax Free)</td>
+            <td style="padding: 10px;" class="num">${formatLKR(0)}</td>
+        </tr>
+    `;
 
-        function formatLKR(num) {
-            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'LKR' }).format(num).replace('LKR', 'Rs.');
-        }
+    let currentPointer = taxFreeLimit;
+    let totalMonthlyTax = 0;
 
-        function calculateExplicitTax() {
-            const lkrIncome = parseFloat(annualLkrInput.value) || 0;
-            const euroIncome = parseFloat(annualEuroInput.value) || 0;
-            const totalIncome = lkrIncome + euroIncome;
+    // Loop through each tax slab using interconnected logic
+    for (let i = 0; i < slabRules.length; i++) {
+        const rule = slabRules[i];
+        const slabStart = currentPointer;
+        const slabEnd = currentPointer + rule.width;
 
-            const taxFreeLimit = 1800000;
+        if (totalIncome > slabStart) {
+            const totalInThisSlab = Math.min(totalIncome, slabEnd) - slabStart;
             
-            const slabRules = [
-                { rate: 0.06, width: 1000000, name: "1st 1,000,000" },
-                { rate: 0.18, width: 500000,  name: "2nd 500,000" },
-                { rate: 0.24, width: 500000,  name: "3rd 500,000" },
-                { rate: 0.30, width: 500000,  name: "4th 500,000" },
-                { rate: 0.36, width: Infinity,name: "Above 4,300,000" }
-            ];
+            let lkrInThisSlab = 0;
+            if (lkrIncome > slabStart) {
+                lkrInThisSlab = Math.min(lkrIncome, slabEnd) - slabStart;
+            }
+            
+            const fxInThisSlab = totalInThisSlab - lkrInThisSlab;
 
-            document.getElementById('resTotal').innerText = formatLKR(totalIncome);
-            const actualTaxFreeUsed = Math.min(totalIncome, taxFreeLimit);
-            document.getElementById('resTaxFree').innerText = formatLKR(actualTaxFreeUsed);
-            document.getElementById('resTaxable').innerText = formatLKR(Math.max(0, totalIncome - taxFreeLimit));
-
-            let htmlRows = `
-                <tr class="bg-slate-900/40">
-                    <td class="p-3 font-semibold text-emerald-400">Up to 1,800,000</td>
-                    <td class="p-3 text-slate-400">Core Tax-Free Relief</td>
-                    <td class="p-3 text-right text-emerald-400">${formatLKR(actualTaxFreeUsed)}</td>
-                    <td class="p-3 text-center text-emerald-500 font-bold">0% (Tax Free)</td>
-                    <td class="p-3 text-right text-emerald-400">${formatLKR(0)}</td>
-                </tr>
-            `;
-
-            let currentPointer = taxFreeLimit;
-            let totalAnnualTax = 0;
-
-            for (let i = 0; i < slabRules.length; i++) {
-                const rule = slabRules[i];
-                const slabStart = currentPointer;
-                const slabEnd = currentPointer + rule.width;
-
-                if (totalIncome > slabStart) {
-                    const totalInThisSlab = Math.min(totalIncome, slabEnd) - slabStart;
-                    
-                    let lkrInThisSlab = 0;
-                    if (lkrIncome > slabStart) {
-                        lkrInThisSlab = Math.min(lkrIncome, slabEnd) - slabStart;
-                    }
-                    
-                    const euroInThisSlab = totalInThisSlab - lkrInThisSlab;
-
-                    if (lkrInThisSlab > 0) {
-                        const taxOnLkr = lkrInThisSlab * rule.rate;
-                        totalAnnualTax += taxOnLkr;
-                        htmlRows += `
-                            <tr>
-                                <td class="p-3 font-semibold text-slate-300">${rule.name}</td>
-                                <td class="p-3 text-slate-400">Local Currency (LKR)</td>
-                                <td class="p-3 text-right text-white">${formatLKR(lkrInThisSlab)}</td>
-                                <td class="p-3 text-center text-amber-500 font-bold">${(rule.rate * 100)}%</td>
-                                <td class="p-3 text-right text-white font-bold">${formatLKR(taxOnLkr)}</td>
-                            </tr>
-                        `;
-                    }
-
-                    if (euroInThisSlab > 0) {
-                        const finalEuroRateForSlab = Math.min(rule.rate, 0.15); 
-                        const taxOnEuro = euroInThisSlab * finalEuroRateForSlab;
-                        totalAnnualTax += taxOnEuro;
-                        htmlRows += `
-                            <tr class="bg-emerald-950/20">
-                                <td class="p-3 font-semibold text-emerald-400">${rule.name}</td>
-                                <td class="p-3 text-emerald-400 font-medium">Foreign Currency (Euro)</td>
-                                <td class="p-3 text-right text-emerald-300">${formatLKR(euroInThisSlab)}</td>
-                                <td class="p-3 text-center text-emerald-400 font-bold">${(finalEuroRateForSlab * 100)}% <span class="text-xs text-slate-400 font-normal">(${rule.rate*100}% Capped)</span></td>
-                                <td class="p-3 text-right text-emerald-300 font-bold">${formatLKR(taxOnEuro)}</td>
-                            </tr>
-                        `;
-                    }
-                }
-                currentPointer = slabEnd;
+            // Render LKR Sub-component inside the slab
+            if (lkrInThisSlab > 0) {
+                const taxOnLkr = lkrInThisSlab * rule.rate;
+                totalMonthlyTax += taxOnLkr;
+                htmlRows += `
+                    <tr class="row-lkr">
+                        <td style="padding: 10px;">${rule.name}</td>
+                        <td style="padding: 10px; color: var(--text-muted);">Local Currency (LKR)</td>
+                        <td style="padding: 10px;" class="num">${formatLKR(lkrInThisSlab)}</td>
+                        <td style="padding: 10px; text-align: center; color: var(--accent-orange);" class="rate-badge">${(rule.rate * 100)}%</td>
+                        <td style="padding: 10px;" class="num">${formatLKR(taxOnLkr)}</td>
+                    </tr>
+                `;
             }
 
-            document.getElementById('slabTableBody').innerHTML = htmlRows;
-            document.getElementById('finalAnnual').innerText = formatLKR(totalAnnualTax);
-            document.getElementById('finalMonthly').innerText = formatLKR(totalAnnualTax / 12);
-            document.getElementById('resultsBlock').classList.remove('hidden');
+            // Render Foreign Currency Sub-component inside the slab with max 15% Cap logic
+            if (fxInThisSlab > 0) {
+                const finalFxRateForSlab = Math.min(rule.rate, 0.15); 
+                const taxOnFx = fxInThisSlab * finalFxRateForSlab;
+                totalMonthlyTax += taxOnFx;
+                
+                const rateText = rule.rate > 0.15 
+                    ? `15% <span class="muted-bracket">(${(rule.rate * 100)}% Capped)</span>` 
+                    : `${(finalFxRateForSlab * 100)}% <span class="muted-bracket">(${(rule.rate * 100)}% Capped)</span>`;
+
+                htmlRows += `
+                    <tr class="row-fx">
+                        <td style="padding: 10px; font-weight: 600;">${rule.name}</td>
+                        <td style="padding: 10px;">Foreign Currency (FC Component)</td>
+                        <td style="padding: 10px;" class="num">${formatLKR(fxInThisSlab)}</td>
+                        <td style="padding: 10px; text-align: center;" class="rate-badge">${rateText}</td>
+                        <td style="padding: 10px;" class="num">${formatLKR(taxOnFx)}</td>
+                    </tr>
+                `;
+            }
         }
-    </script>
+        currentPointer = slabEnd;
+    }
+
+    // Traditional Statutory Logic
+    const epf8 = totalForEpf * 0.08;
+    const epf12 = totalForEpf * 0.12;
+    const etf3 = totalForEpf * 0.03;
+
+    // Total Deductions
+    const totalDeductions = epf8 + totalMonthlyTax + stampDuty + advance + insurance + other + loan;
+    
+    // Net Salary & CTC
+    const netSalary = totalIncome - totalDeductions;
+    const ctc = totalIncome + epf12 + etf3;
+
+    // UI Updates
+    document.getElementById('slabTableBody').innerHTML = htmlRows;
+    document.getElementById('totalEpf').innerText = formatLKR(totalForEpf);
+    document.getElementById('grossSalary').innerText = formatLKR(totalIncome);
+    document.getElementById('epf8').innerText = formatLKR(epf8);
+    document.getElementById('payeTax').innerText = formatLKR(totalMonthlyTax);
+    document.getElementById('totalDeductions').innerText = formatLKR(totalDeductions);
+    
+    document.getElementById('netSalary').innerText = netSalary.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('ctcValue').innerText = ctc.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+    document.getElementById('breakdownEpf8').innerText = formatLKR(epf8);
+    document.getElementById('breakdownEpf12').innerText = formatLKR(epf12);
+    document.getElementById('breakdownEtf3').innerText = formatLKR(etf3);
+
+    const taxablePool = Math.max(0, totalIncome - taxFreeLimit);
+    document.getElementById('taxSummaryText').innerHTML = 
+        `<strong>Taxable Pool (Above 150k Relief):</strong> ${formatLKR(taxablePool)} | <strong>Total Monthly PAYE Liability:</strong> <span style="color: var(--accent-orange); font-weight: bold;">${formatLKR(totalMonthlyTax)}</span>`;
+}
+</script>
+
 </body>
 </html>
